@@ -55,6 +55,7 @@ var ColorSpace = coreColorSpace.ColorSpace;
 var ObjectLoader = coreObj.ObjectLoader;
 var FileSpec = coreObj.FileSpec;
 var OperatorList = coreEvaluator.OperatorList;
+var Ref = corePrimitives.Ref;
 
 /**
  * @class
@@ -618,6 +619,28 @@ var WidgetAnnotation = (function WidgetAnnotationClosure() {
     data.fieldType = isName(fieldType) ? fieldType.name : '';
     data.fieldFlags = Util.getInheritableProperty(dict, 'Ff') || 0;
     this.fieldResources = Util.getInheritableProperty(dict, 'DR') || Dict.empty;
+
+    // Build the options array
+    var dictOpts = Util.getInheritableProperty(dict, 'Opt');
+    if (data.fieldType === 'Ch' && dictOpts !== undefined) {
+      if (dictOpts.num) {
+        // The options are stored in a ref
+        var optionsRefNum = dict.map.Opt.num;
+        // Get XRefs synchronously (if not already loaded)
+        var optionsRef = new Ref(optionsRefNum,
+          dict.xref.entries[optionsRefNum].gen);
+
+        dict.xref.fetch(optionsRef);
+
+        // Get the options from the xref array
+        if (dict.xref.cache[optionsRefNum]) {
+          data.options = dict.xref.cache[optionsRefNum];
+        }
+      } else {
+        // The options are stored directly in the dictionary
+        data.options = dictOpts;
+      }
+    }
 
     // Hide unsupported Widget signatures.
     if (data.fieldType === 'Sig') {
