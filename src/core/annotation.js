@@ -611,14 +611,34 @@ var WidgetAnnotation = (function WidgetAnnotationClosure() {
     var data = this.data;
 
     data.annotationType = AnnotationType.WIDGET;
-    data.fieldValue = stringToPDFString(
-      Util.getInheritableProperty(dict, 'V') || '');
+
     data.alternativeText = stringToPDFString(dict.get('TU') || '');
     data.defaultAppearance = Util.getInheritableProperty(dict, 'DA') || '';
     var fieldType = Util.getInheritableProperty(dict, 'FT');
     data.fieldType = isName(fieldType) ? fieldType.name : '';
     data.fieldFlags = Util.getInheritableProperty(dict, 'Ff') || 0;
     this.fieldResources = Util.getInheritableProperty(dict, 'DR') || Dict.empty;
+
+    var fieldValue = Util.getInheritableProperty(dict, 'V');
+
+    if (data.fieldType === 'Btn') {
+      if (data.fieldFlags & 65536) {
+        // Button
+        try {
+          fieldValue = dict.get('MK').get('CA');
+        }
+        catch(e) {}
+      }
+      else {
+        // Radios or checkboxes
+
+        // In some cases, a name is used that isn't defined in a parent
+        fieldValue = fieldValue ? (fieldValue.name || fieldValue) : fieldValue;
+      }
+    }
+
+    fieldValue = stringToPDFString(fieldValue || '');
+    data.fieldValue = fieldValue;
 
     // Build the options array
     var dictOpts = Util.getInheritableProperty(dict, 'Opt');
